@@ -1,0 +1,4 @@
+services:
+  internship-task:
+    build: .
+    image: traveltime_internship_task
