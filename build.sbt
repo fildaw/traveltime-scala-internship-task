@@ -9,3 +9,8 @@ lazy val root = (project in file("."))
 enablePlugins(JavaAppPackaging)
 enablePlugins(AshScriptPlugin)
 maintainer := "fildaw"
+
+// https://mvnrepository.com/artifact/com.google.geometry/s2-geometry
+libraryDependencies += "com.google.geometry" % "s2-geometry" % "2.0.0"
+
+libraryDependencies += "io.circe" %% "circe-parser" % "0.14.14"
