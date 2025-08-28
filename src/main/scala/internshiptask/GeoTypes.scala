@@ -2,10 +2,12 @@ package internshiptask
 
 import io.circe.Decoder
 
-case class Coord(lon: Double, lat: Double)
-case class Location(name: String, coord: Coord)
-case class Polygon(ring: List[Coord])
-case class Region(name: String, polygons: List[Polygon])
+trait GeoType
+
+case class Coord(lon: Double, lat: Double) extends GeoType
+case class Location(name: String, coord: Coord) extends GeoType
+case class Polygon(ring: List[Coord]) extends GeoType
+case class Region(name: String, polygons: List[Polygon]) extends GeoType
 
 object Coord {
   implicit val decodeCoord: Decoder[Coord] = Decoder[(Double, Double)].map(p => Coord(p._1, p._2))

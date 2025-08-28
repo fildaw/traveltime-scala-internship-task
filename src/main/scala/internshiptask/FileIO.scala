@@ -1,142 +1,53 @@
 package internshiptask
 import io.circe.parser.decode
+import io.circe.{Decoder, Error}
+
+import java.io.PrintWriter
+import scala.io.{BufferedSource, Source}
+
+object Help {
+  def unapply(s: String): Boolean = s == "-h" || s == "--help"
+}
+
+object FileInArg {
+  def unapply(s: String): Option[BufferedSource] = {
+    if (new java.io.File(s).exists) {
+      return Some(Source.fromFile(s))
+    }
+    None
+  }
+}
+
+object FileOutArg {
+  def unapply(s: String): Option[PrintWriter] = Some(new PrintWriter(s))
+}
 
 object FileIO {
-  def read() = {
-    val decoded = decode[List[Region]]("""[
-                                         |  {
-                                         |    "name": "region1",
-                                         |    "coordinates": [
-                                         |      [
-                                         |        [
-                                         |          25.13573603154873,
-                                         |          54.67922829209249
-                                         |        ],
-                                         |        [
-                                         |          25.156131289233258,
-                                         |          54.58478594629585
-                                         |        ],
-                                         |        [
-                                         |          25.286660938416787,
-                                         |          54.5942400514071
-                                         |        ],
-                                         |        [
-                                         |          25.429427742209867,
-                                         |          54.64619841630662
-                                         |        ],
-                                         |        [
-                                         |          25.36416291761924,
-                                         |          54.77109854334182
-                                         |        ],
-                                         |        [
-                                         |          25.13573603154873,
-                                         |          54.77109854334182
-                                         |        ],
-                                         |        [
-                                         |          25.13573603154873,
-                                         |          54.67922829209249
-                                         |        ]
-                                         |      ]
-                                         |    ]
-                                         |  },
-                                         |  {
-                                         |    "name": "region2",
-                                         |    "coordinates": [
-                                         |      [
-                                         |        [
-                                         |          23.728463251292055,
-                                         |          54.85806510526285
-                                         |        ],
-                                         |        [
-                                         |          23.834518591254124,
-                                         |          54.815780434232124
-                                         |        ],
-                                         |        [
-                                         |          24.02623401349132,
-                                         |          54.815780434232124
-                                         |        ],
-                                         |        [
-                                         |          24.07110358039847,
-                                         |          54.87215015295382
-                                         |        ],
-                                         |        [
-                                         |          24.042550219638912,
-                                         |          54.98465349182413
-                                         |        ],
-                                         |        [
-                                         |          23.728463251292055,
-                                         |          54.98465349182413
-                                         |        ],
-                                         |        [
-                                         |          23.728463251292055,
-                                         |          54.85806510526285
-                                         |        ]
-                                         |      ]
-                                         |    ]
-                                         |  },
-                                         |  {
-                                         |    "name": "region3",
-                                         |    "coordinates": [
-                                         |      [
-                                         |        [
-                                         |          21.099044587495996,
-                                         |          55.697364539462455
-                                         |        ],
-                                         |        [
-                                         |          21.13167699979246,
-                                         |          55.63985211052827
-                                         |        ],
-                                         |        [
-                                         |          21.233653288216374,
-                                         |          55.6766698024725
-                                         |        ],
-                                         |        [
-                                         |          21.201020875921074,
-                                         |          55.741017470855724
-                                         |        ],
-                                         |        [
-                                         |          21.135756051329366,
-                                         |          55.80067402588713
-                                         |        ],
-                                         |        [
-                                         |          21.099044587495996,
-                                         |          55.697364539462455
-                                         |        ]
-                                         |      ],
-                                         |      [
-                                         |        [
-                                         |          21.100737600741354,
-                                         |          55.64456937538671
-                                         |        ],
-                                         |        [
-                                         |          21.08556244179519,
-                                         |          55.48839930587644
-                                         |        ],
-                                         |        [
-                                         |          20.97630129738701,
-                                         |          55.30743065067017
-                                         |        ],
-                                         |        [
-                                         |          21.049142060326403,
-                                         |          55.31952101226224
-                                         |        ],
-                                         |        [
-                                         |          21.115912759686722,
-                                         |          55.495276974748975
-                                         |        ],
-                                         |        [
-                                         |          21.131087918632034,
-                                         |          55.630865024154645
-                                         |        ],
-                                         |        [
-                                         |          21.100737600741354,
-                                         |          55.64456937538671
-                                         |        ]
-                                         |      ]
-                                         |    ]
-                                         |  }
-                                         |]
-                                         |""".stripMargin)
-    println(decoded)
+  private val defaultOutputFile = "output.json"
+
+  private def printHelp(): Unit = {
+    println("Help:")
+    println("Arguments: [--help] <locations_file_path> <regions_file_path> [output_file_path]")
   }
+
+  private def printInvalidUsage(): Unit = {
+    println("Invalid usage or input files cannot be opened!")
+    printHelp()
+  }
+
+  def parseArgs(args: Array[String]): Option[(BufferedSource, BufferedSource, PrintWriter)] = args match {
+    case Array(_ @ Help(), _*) =>
+      printHelp()
+      None
+    case Array(FileInArg(locationSource), FileInArg(regionSource)) =>
+      Some((locationSource, regionSource, new PrintWriter(defaultOutputFile)))
+    case Array(FileInArg(locationSource), FileInArg(regionSource), FileOutArg(output)) =>
+      Some((locationSource, regionSource, output))
+    case _ =>
+      printInvalidUsage()
+      None
+  }
+
+  def readJsonFileToGeoList[A <: GeoType](src: BufferedSource)(implicit decoder: Decoder[A]) =
+    decode[List[A]](src.getLines().mkString)
 }

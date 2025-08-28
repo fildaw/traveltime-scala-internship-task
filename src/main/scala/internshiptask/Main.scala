@@ -1,11 +1,24 @@
 package internshiptask
-import com.google.common.geometry.{S1Angle, S2LatLng, S2Loop, S2Point, S2Polygon}
-
-import scala.jdk.CollectionConverters._
 
 object Main {
-  def main(args: Array[String]) = {
-    FileIO.read()
+  def main(args: Array[String]): Unit = {
+    val (locationSrc, regionSrc, outputWriter) = FileIO.parseArgs(args) match {
+      case Some(f) => f
+      case _ => return
+    }
+    val (locations, regions) = Seq(
+      (FileIO.readJsonFileToGeoList[Location](locationSrc), "locations file"),
+      (FileIO.readJsonFileToGeoList[Region](regionSrc), "regions file"),
+    ) flatMap {
+      case (Right(l), _) => l
+      case (Left(e), context) =>
+        println(f"Error: ${e.getMessage} in $context")
+        None
+    } match {
+      case Seq(l, r) => (l, r)
+      case _ => return
+    }
+    println(locations, regions)
     /*val coords = List((-58.01147830609524,
       -63.7528771350633),(-102.98181712768798,
       -74.97433056385762),(-145.16633200976563,
