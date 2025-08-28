@@ -14,4 +14,5 @@ FROM eclipse-temurin:${ECLIPSE_TEMURIN_VERSION}-jre-alpine
 LABEL authors="fidaw"
 WORKDIR /app
 COPY --from=builder /build/target/universal/stage/. .
-CMD ["./bin/traveltime-scala-internship-task"]
+COPY locations.json regions.json ./
+CMD ["./bin/traveltime-scala-internship-task", "--", "locations.json", "regions.json"]

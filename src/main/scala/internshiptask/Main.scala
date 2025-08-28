@@ -1,6 +1,10 @@
 package internshiptask
 
 object Main {
+  def matchRegionsWithLocations(regions: List[Region], locations: List[Location]): List[RegionWithLocations] = {
+    for (region <- regions) yield RegionWithLocations.matchWithLocations(region, locations)
+  }
+
   def main(args: Array[String]): Unit = {
     val (locationSrc, regionSrc, outputWriter) = FileIO.parseArgs(args) match {
       case Some(f) => f
@@ -19,7 +23,7 @@ object Main {
       case _ => return
     }
 
-    val matches = for (region <- regions) yield RegionWithLocations.matchWithLocations(region, locations)
+    val matches = matchRegionsWithLocations(regions, locations)
     FileIO.writeResultsToOutput(matches, outputWriter)
   }
 }
