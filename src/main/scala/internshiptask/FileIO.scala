@@ -1,5 +1,8 @@
 package internshiptask
+
+import scala.util.Using
 import io.circe.parser.decode
+import io.circe.syntax._
 import io.circe.{Decoder, Error}
 
 import java.io.PrintWriter
@@ -48,6 +51,9 @@ object FileIO {
       None
   }
 
-  def readJsonFileToGeoList[A <: GeoType](src: BufferedSource)(implicit decoder: Decoder[A]) =
+  def readJsonFileToGeoList[A <: GeoType](src: BufferedSource)(implicit decoder: Decoder[A]): Either[Error, List[A]] =
     decode[List[A]](src.getLines().mkString)
+
+  def writeResultsToOutput(res: List[RegionWithLocations], output: PrintWriter): Unit =
+    Using.resource(output)(_.write(res.asJson.toString))
 }

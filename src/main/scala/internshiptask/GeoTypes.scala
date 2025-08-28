@@ -1,13 +1,24 @@
 package internshiptask
 
-import io.circe.Decoder
+import com.google.common.geometry.{S1Angle, S2LatLng, S2Loop, S2Point, S2Polygon}
+import io.circe.{Decoder, Encoder, Json}
+
+import scala.jdk.CollectionConverters._
 
 trait GeoType
 
-case class Coord(lon: Double, lat: Double) extends GeoType
+case class Coord(lon: Double, lat: Double) extends GeoType {
+  def toS2Point: S2Point = new S2LatLng(S1Angle.degrees(lat), S1Angle.degrees(lon)).toPoint
+}
 case class Location(name: String, coord: Coord) extends GeoType
-case class Polygon(ring: List[Coord]) extends GeoType
-case class Region(name: String, polygons: List[Polygon]) extends GeoType
+case class Polygon(ring: List[Coord]) extends GeoType {
+  def toS2Polygon: S2Polygon = new S2Polygon(new S2Loop(ring.map(_.toS2Point).asJava))
+  def contains(loc: Location): Boolean = toS2Polygon.contains(loc.coord.toS2Point)
+}
+case class Region(name: String, polygons: List[Polygon]) extends GeoType {
+  def contains(loc: Location): Boolean = polygons.exists(_.contains(loc))
+}
+case class RegionWithLocations(name: String, locations: Set[Location])
 
 object Coord {
   implicit val decodeCoord: Decoder[Coord] = Decoder[(Double, Double)].map(p => Coord(p._1, p._2))
@@ -33,4 +44,16 @@ object Region {
       c <- a.downField("coordinates").as[List[Polygon]]
     } yield Region(n, c)
   )
+}
+
+object RegionWithLocations {
+  def matchWithLocations(region: Region, locations: List[Location]): RegionWithLocations = {
+    val matched = for (l <- locations; if region.contains(l)) yield l
+    RegionWithLocations(region.name, matched.toSet)
+  }
+
+  implicit val encode: Encoder[RegionWithLocations] = Encoder.instance(r => Json.obj(
+    ("region", Json.fromString(r.name)),
+    ("matched_locations", Json.fromValues(r.locations.map(l => Json.fromString(l.name))))
+  ))
 }
