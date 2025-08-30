@@ -2,3 +2,5 @@ services:
   internship-task:
     build: .
     image: traveltime_internship_task
+    volumes:
+      - ./json_files:/app/json_files:rw
