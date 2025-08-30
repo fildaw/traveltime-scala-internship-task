@@ -3,7 +3,7 @@ package internshiptask
 import scala.util.Using
 import io.circe.parser.decode
 import io.circe.syntax._
-import io.circe.{Decoder, Error}
+import io.circe.{Decoder, Error, ParsingFailure}
 
 import java.io.PrintWriter
 import scala.io.{BufferedSource, Source}
@@ -51,8 +51,14 @@ object FileIO {
       None
   }
 
-  def readJsonFileToGeoList[A <: GeoType](src: BufferedSource)(implicit decoder: Decoder[A]): Either[Error, List[A]] =
-    decode[List[A]](src.getLines().mkString)
+  def readJsonFileToGeoList[A <: GeoType](src: BufferedSource)(implicit decoder: Decoder[A]): Either[Error, List[A]] = {
+    try {
+      decode[List[A]](src.getLines().mkString)
+    } catch {
+      case e: Exception => Left(ParsingFailure(e.getMessage, e.getCause))
+    }
+
+  }
 
   def writeResultsToOutput(res: List[RegionWithLocations], output: PrintWriter): Unit =
     Using.resource(output)(_.write(res.asJson.toString))
