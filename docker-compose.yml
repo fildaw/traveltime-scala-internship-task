@@ -2,5 +2,7 @@ services:
   internship-task:
     build: .
     image: traveltime_internship_task
+    environment:
+      - FILES_FOLDER=${FILES_FOLDER}
     volumes:
-      - ./json_files:/app/json_files:rw
+      - ${FILES_FOLDER}:/app/json_files:rw
