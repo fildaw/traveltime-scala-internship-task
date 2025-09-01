@@ -30,6 +30,10 @@ filip@pc:~$ cd traveltime-scala-internship-task
 filip@pc:~/traveltime-scala-internship-task$ docker compose build
 filip@pc:~/traveltime-scala-internship-task$ docker compose up
 ```
+The container defined in `docker-compose` has a bind mount to provide a folder on a host machine for the app to read input files 
+(`locations.json` and `regions.json`) and store the output file (`output.json`). \
+By default the folder is set to `./json_files`. 
+To change it, move the input files to desired location and edit the `FILES_FOLDER` variable in `.env` file to a new path.
 
 ## Libraries used
 - [S2 Geometry](http://s2geometry.io) - for spherical calculations
