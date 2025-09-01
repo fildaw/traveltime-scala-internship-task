@@ -6,24 +6,32 @@ object Main {
   }
 
   def main(args: Array[String]): Unit = {
-    val (locationSrc, regionSrc, outputWriter) = FileIO.parseArgs(args) match {
-      case Some(f) => f
-      case _ => return
-    }
-    val (locations, regions) = Array(
-      (FileIO.readJsonFileToGeoList[Location](locationSrc), "locations file"),
-      (FileIO.readJsonFileToGeoList[Region](regionSrc), "regions file"),
-    ) flatMap {
-      case (Right(l), _) => Some(l)
-      case (Left(e), context) =>
-        println(f"Error: ${e.getMessage} in $context")
-        None
-    } match {
-      case Array(l: List[Location], r: List[Region]) => (l, r)
-      case _ => return
+    FileIO.parseArgs(args) match {
+      case Some(config) =>
+        val read = List(
+          (FileIO.readJsonFileToGeoList[Location](config.locationsFile), "locations file"),
+          (FileIO.readJsonFileToGeoList[Region](config.regionsFile), "regions file"),
+        )
+        val res: Either[List[(Exception, String)], (List[Location], List[Region])] = read match {
+          case (Right(l: List[Location]), _) :: (Right(r: List[Region]), _) :: Nil => Right((l, r))
+          case _ =>
+            val errors = read.collect {
+              case (Left(err), context) => (err.asInstanceOf[Exception], context)
+            }
+            Left(errors)
+        }
+
+        res match {
+          case Right((locations, regions)) =>
+            val matches = matchRegionsWithLocations(regions, locations)
+            FileIO.writeResultsToOutput(matches, config.outputWriter)
+          case Left(errorsWithContexts) =>
+            for {
+              (err, context) <- errorsWithContexts
+            } println(f"Error: ${err.getMessage} in $context")
+        }
+      case _ => println("Cannot parse arguments!")
     }
 
-    val matches = matchRegionsWithLocations(regions, locations)
-    FileIO.writeResultsToOutput(matches, outputWriter)
   }
 }
