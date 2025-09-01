@@ -26,9 +26,9 @@ object FileIO {
       arg[File]("<regions_file_path>")
         .required()
         .action((x, config) => config.copy(regionsFile = Source.fromFile(x))),
-      arg[String]("<output_file_path>")
+      arg[File]("<output_file_path>")
         .optional()
-        .action((x, config) => config.copy(outputWriter = new File(x)))
+        .action((x, config) => config.copy(outputWriter = x))
     )
   }
 
