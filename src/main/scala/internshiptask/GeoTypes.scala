@@ -5,7 +5,7 @@ import io.circe.{Decoder, Encoder, Json}
 
 import scala.jdk.CollectionConverters._
 
-class PolygonError(private val s2error: S2Error, private val cause: Throwable = None.orNull) extends Exception(s2error.text(), cause) {}
+class PolygonError(val s2error: S2Error, val cause: Throwable = None.orNull) extends Exception(s2error.text(), cause) {}
 
 trait GeoType
 
