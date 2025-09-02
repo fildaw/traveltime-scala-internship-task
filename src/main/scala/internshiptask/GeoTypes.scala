@@ -7,7 +7,7 @@ import scala.jdk.CollectionConverters._
 
 class PolygonError(val s2error: S2Error, val cause: Throwable = None.orNull) extends Exception(s2error.text(), cause) {}
 
-trait GeoType
+sealed trait GeoType
 
 case class Coord(lon: Double, lat: Double) extends GeoType {
   val s2Point: S2Point = new S2LatLng(S1Angle.degrees(lat), S1Angle.degrees(lon)).toPoint

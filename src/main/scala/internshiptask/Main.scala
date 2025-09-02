@@ -29,8 +29,11 @@ object Main {
             for {
               (err, context) <- errorsWithContexts
             } println(f"Error: $err in $context")
+            sys.exit(1)
         }
-      case _ => println("Cannot parse arguments!")
+      case _ =>
+        println("Cannot parse arguments!")
+        sys.exit(1)
     }
 
   }
