@@ -14,8 +14,8 @@ case class Coord(lon: Double, lat: Double) extends GeoType {
 }
 case class Location(name: String, coord: Coord) extends GeoType
 case class Polygon(ringIn: List[Coord]) extends GeoType {
-  private val ring = if (ringIn.head == ringIn.last) ringIn.dropRight(1) else ringIn // s2 geometry assumes that last point is connected with the first
   val s2Polygon: S2Polygon = {
+    val ring = if (ringIn.head == ringIn.last) ringIn.dropRight(1) else ringIn // s2 geometry assumes that last point is connected with the first
     val poly = new S2Polygon(new S2Loop(ring.map(_.s2Point).asJava))
     val error = new S2Error()
     if (poly.findValidationError(error)) throw new PolygonError(error)
