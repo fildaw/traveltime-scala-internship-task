@@ -1,19 +1,27 @@
 package internshiptask
 
-import com.google.common.geometry.{S1Angle, S2LatLng, S2Loop, S2Point, S2Polygon}
+import com.google.common.geometry.{S1Angle, S2Error, S2LatLng, S2Loop, S2Point, S2Polygon}
 import io.circe.{Decoder, Encoder, Json}
 
 import scala.jdk.CollectionConverters._
 
+class PolygonError(val s2error: S2Error, val cause: Throwable = None.orNull) extends Exception(s2error.text(), cause) {}
+
 trait GeoType
 
 case class Coord(lon: Double, lat: Double) extends GeoType {
-  def toS2Point: S2Point = new S2LatLng(S1Angle.degrees(lat), S1Angle.degrees(lon)).toPoint
+  val s2Point: S2Point = new S2LatLng(S1Angle.degrees(lat), S1Angle.degrees(lon)).toPoint
 }
 case class Location(name: String, coord: Coord) extends GeoType
-case class Polygon(ring: List[Coord]) extends GeoType {
-  def toS2Polygon: S2Polygon = new S2Polygon(new S2Loop(ring.map(_.toS2Point).asJava))
-  def contains(loc: Location): Boolean = toS2Polygon.contains(loc.coord.toS2Point)
+case class Polygon(ringIn: List[Coord]) extends GeoType {
+  private val ring = if (ringIn.head == ringIn.last) ringIn.dropRight(1) else ringIn // s2 geometry assumes that last point is connected with the first
+  val s2Polygon: S2Polygon = {
+    val poly = new S2Polygon(new S2Loop(ring.map(_.s2Point).asJava))
+    val error = new S2Error()
+    if (poly.findValidationError(error)) throw new PolygonError(error)
+    poly
+  }
+  def contains(loc: Location): Boolean = s2Polygon.contains(loc.coord.s2Point)
 }
 case class Region(name: String, polygons: List[Polygon]) extends GeoType {
   def contains(loc: Location): Boolean = polygons.exists(_.contains(loc))
