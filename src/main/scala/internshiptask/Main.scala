@@ -12,11 +12,11 @@ object Main {
           (FileIO.readJsonFileToGeoList[Location](config.locationsFile), "locations file"),
           (FileIO.readJsonFileToGeoList[Region](config.regionsFile), "regions file"),
         )
-        val res: Either[List[(Exception, String)], (List[Location], List[Region])] = read match {
+        val res: Either[List[(String, String)], (List[Location], List[Region])] = read match {
           case (Right(l: List[Location]), _) :: (Right(r: List[Region]), _) :: Nil => Right((l, r))
           case _ =>
             val errors = read.collect {
-              case (Left(err), context) => (err.asInstanceOf[Exception], context)
+              case (Left(err), context) => (err, context)
             }
             Left(errors)
         }
@@ -28,7 +28,7 @@ object Main {
           case Left(errorsWithContexts) =>
             for {
               (err, context) <- errorsWithContexts
-            } println(f"Error: ${err.getMessage} in $context")
+            } println(f"Error: $err in $context")
         }
       case _ => println("Cannot parse arguments!")
     }

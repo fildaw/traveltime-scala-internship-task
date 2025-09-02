@@ -1,6 +1,6 @@
 package internshiptask
 
-import scala.util.Using
+import scala.util.{Failure, Success, Try, Using}
 import io.circe.parser.decode
 import io.circe.syntax._
 import io.circe.{Decoder, Error, ParsingFailure}
@@ -36,13 +36,11 @@ object FileIO {
     OParser.parse(cliParser, args, AppConfig())
   }
 
-  def readJsonFileToGeoList[A <: GeoType](src: BufferedSource)(implicit decoder: Decoder[A]): Either[Error, List[A]] = {
-    try {
-      decode[List[A]](src.getLines().mkString)
-    } catch {
-      case e: Exception => Left(ParsingFailure(e.getMessage, e.getCause))
+  def readJsonFileToGeoList[A <: GeoType](src: BufferedSource)(implicit decoder: Decoder[A]): Either[String, List[A]] = {
+    Try(decode[List[A]](src.getLines().mkString)) match {
+      case Failure(geoError) => Left(geoError.getMessage)
+      case Success(circeEither) => circeEither.left.map(_.getMessage)
     }
-
   }
 
   def writeResultsToOutput(res: List[RegionWithLocations], output: File): Unit =
