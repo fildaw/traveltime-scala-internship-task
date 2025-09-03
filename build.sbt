@@ -19,4 +19,4 @@ libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.19" % "test"
 
 libraryDependencies += "com.github.scopt" %% "scopt" % "4.1.0"
 
-libraryDependencies += "org.typelevel" %% "cats-effect" % "3.6.3"
+libraryDependencies += "org.typelevel" %% "cats-core" % "2.13.0"
