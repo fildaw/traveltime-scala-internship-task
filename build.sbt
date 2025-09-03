@@ -16,3 +16,7 @@ libraryDependencies += "com.google.geometry" % "s2-geometry" % "2.0.0"
 libraryDependencies += "io.circe" %% "circe-parser" % "0.14.14"
 
 libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.19" % "test"
+
+libraryDependencies += "com.github.scopt" %% "scopt" % "4.1.0"
+
+libraryDependencies += "org.typelevel" %% "cats-core" % "2.13.0"

@@ -1,65 +1,48 @@
 package internshiptask
 
-import scala.util.Using
+import scala.util.{Failure, Success, Try, Using}
 import io.circe.parser.decode
 import io.circe.syntax._
 import io.circe.{Decoder, Error, ParsingFailure}
+import scopt.OParser
 
-import java.io.PrintWriter
+import java.io.{File, PrintWriter}
 import scala.io.{BufferedSource, Source}
 
-object Help {
-  def unapply(s: String): Boolean = s == "-h" || s == "--help"
-}
-
-object FileInArg {
-  def unapply(s: String): Option[BufferedSource] = {
-    if (new java.io.File(s).exists) {
-      return Some(Source.fromFile(s))
-    }
-    None
-  }
-}
-
-object FileOutArg {
-  def unapply(s: String): Option[PrintWriter] = Some(new PrintWriter(s))
-}
+case class AppConfig(
+  locationsFile: BufferedSource = null,
+  regionsFile: BufferedSource = null,
+  outputWriter: File = new File("output.json"))
 
 object FileIO {
-  private val defaultOutputFile = "output.json"
-
-  private def printHelp(): Unit = {
-    println("Help:")
-    println("Arguments: [--help] <locations_file_path> <regions_file_path> [output_file_path]")
+  private val builder = OParser.builder[AppConfig]
+  private val cliParser = {
+    import builder._
+    OParser.sequence(
+      programName("traveltime-scala-internship-task"),
+      arg[File]("<locations_file_path>")
+        .required()
+        .action((x, config) => config.copy(locationsFile = Source.fromFile(x))),
+      arg[File]("<regions_file_path>")
+        .required()
+        .action((x, config) => config.copy(regionsFile = Source.fromFile(x))),
+      arg[File]("<output_file_path>")
+        .optional()
+        .action((x, config) => config.copy(outputWriter = x))
+    )
   }
 
-  private def printInvalidUsage(): Unit = {
-    println("Invalid usage or input files cannot be opened!")
-    printHelp()
+  def parseArgs(args: Array[String]): Option[AppConfig] = {
+    OParser.parse(cliParser, args, AppConfig())
   }
 
-  def parseArgs(args: Array[String]): Option[(BufferedSource, BufferedSource, PrintWriter)] = args match {
-    case Array(_ @ Help(), _*) =>
-      printHelp()
-      None
-    case Array(FileInArg(locationSource), FileInArg(regionSource)) =>
-      Some((locationSource, regionSource, new PrintWriter(defaultOutputFile)))
-    case Array(FileInArg(locationSource), FileInArg(regionSource), FileOutArg(output)) =>
-      Some((locationSource, regionSource, output))
-    case _ =>
-      printInvalidUsage()
-      None
-  }
-
-  def readJsonFileToGeoList[A <: GeoType](src: BufferedSource)(implicit decoder: Decoder[A]): Either[Error, List[A]] = {
-    try {
-      decode[List[A]](src.getLines().mkString)
-    } catch {
-      case e: Exception => Left(ParsingFailure(e.getMessage, e.getCause))
+  def readJsonFileToGeoList[A <: GeoType](src: BufferedSource)(implicit decoder: Decoder[A]): Either[String, List[A]] = {
+    Try(decode[List[A]](src.getLines().mkString)) match {
+      case Failure(geoError) => Left(geoError.getMessage)
+      case Success(circeEither) => circeEither.left.map(_.getMessage)
     }
-
   }
 
-  def writeResultsToOutput(res: List[RegionWithLocations], output: PrintWriter): Unit =
-    Using.resource(output)(_.write(res.asJson.toString))
+  def writeResultsToOutput(res: List[RegionWithLocations], output: File): Unit =
+    Using.resource(new PrintWriter(output))(_.write(res.asJson.toString))
 }
